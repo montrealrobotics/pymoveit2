@@ -1,11 +1,13 @@
 import threading
 from typing import List, Optional, Union
+import time
 
 from action_msgs.msg import GoalStatus
 from control_msgs.action import GripperCommand as GripperCommandAction
 from rclpy.action import ActionClient
 from rclpy.callback_groups import CallbackGroup
 from rclpy.node import Node
+import rclpy
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSHistoryPolicy,
@@ -225,7 +227,7 @@ class GripperCommand:
         self.__is_motion_requested = False
         self.__is_executing = False
 
-    def wait_until_executed(self) -> bool:
+    def wait_until_executed(self, timeout_sec=10.0) -> bool:
         """
         Wait until the previously requested motion is finalised through either a success or failure.
         """
@@ -236,8 +238,21 @@ class GripperCommand:
             )
             return False
 
+        start_time = self._node.get_clock().now()
+
         while self.__is_motion_requested or self.__is_executing:
-            self.__wait_until_executed_rate.sleep()
+            rclpy.spin_once(self._node, timeout_sec=0.01)
+
+            time.sleep(0.01)
+            if timeout_sec is not None:
+                current_time = self._node.get_clock().now()
+                elapsed = (current_time - start_time).nanoseconds / 1e9
+                if elapsed > timeout_sec:
+                    self._node.get_logger().warn(f"Wait until executed timed out after {timeout_sec} seconds")
+                    self.__is_motion_requested = False
+                    self.__is_executing = False
+                    return False
+
         return True
 
     def __joint_state_callback(self, msg: JointState):
