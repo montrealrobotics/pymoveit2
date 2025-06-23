@@ -44,6 +44,8 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from pymoveit2.utils import enum_to_str
 
+from builtin_interfaces.msg import Duration as DurationMsg
+
 
 class MoveIt2State(Enum):
     """
@@ -58,6 +60,21 @@ class MoveIt2State(Enum):
     IDLE = 0
     REQUESTING = 1
     EXECUTING = 2
+
+
+def scale_duration(duration_msg: DurationMsg, factor: float) -> DurationMsg:
+    # Convert original Duration to total nanoseconds
+    total_nanoseconds = duration_msg.sec * 1_000_000_000 + duration_msg.nanosec
+
+    # Multiply
+    scaled_nanoseconds = int(total_nanoseconds * factor)
+
+    # Convert back to Duration message
+    scaled_msg = DurationMsg()
+    scaled_msg.sec = scaled_nanoseconds // 1_000_000_000
+    scaled_msg.nanosec = scaled_nanoseconds % 1_000_000_000
+
+    return scaled_msg
 
 
 class MoveIt2:
@@ -512,6 +529,7 @@ class MoveIt2:
         cartesian: bool = False,
         max_step: float = 0.0025,
         cartesian_fraction_threshold: float = 0.0,
+        cartesian_velocity_scaling_factor: float = 4.0,
     ) -> Optional[JointTrajectory]:
         """
         Call plan_async and wait on future
@@ -532,11 +550,25 @@ class MoveIt2:
         while not future.done():
             rclpy.spin_once(self._node, timeout_sec=1.0)
 
-        return self.get_trajectory(
+        traj = self.get_trajectory(
             future,
             cartesian=cartesian,
             cartesian_fraction_threshold=cartesian_fraction_threshold,
         )
+
+        if cartesian and traj is not None:
+            # Rescale trajectory time, velocities and accelerations for cartesian plans
+            for point in traj.points:
+                point.time_from_start = scale_duration(point.time_from_start, cartesian_velocity_scaling_factor)
+
+                for i, v in enumerate(point.velocities):
+                    point.velocities[i] = v / cartesian_velocity_scaling_factor
+
+                for i, a in enumerate(point.accelerations):
+                    point.accelerations[i] = a / (cartesian_velocity_scaling_factor ** 2)
+
+
+        return traj
 
     def plan_async(
         self,
@@ -2435,3 +2467,4 @@ def init_dummy_joint_trajectory_from_state(
     joint_trajectory.points.append(point)
 
     return joint_trajectory
+
