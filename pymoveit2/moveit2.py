@@ -42,9 +42,7 @@ from shape_msgs.msg import Mesh, MeshTriangle, SolidPrimitive
 from std_msgs.msg import Header, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from pymoveit2.utils import enum_to_str
-
-from builtin_interfaces.msg import Duration as DurationMsg
+from pymoveit2.utils import enum_to_str, scale_velocity
 
 
 class MoveIt2State(Enum):
@@ -60,21 +58,6 @@ class MoveIt2State(Enum):
     IDLE = 0
     REQUESTING = 1
     EXECUTING = 2
-
-
-def scale_duration(duration_msg: DurationMsg, factor: float) -> DurationMsg:
-    # Convert original Duration to total nanoseconds
-    total_nanoseconds = duration_msg.sec * 1_000_000_000 + duration_msg.nanosec
-
-    # Multiply
-    scaled_nanoseconds = int(total_nanoseconds * factor)
-
-    # Convert back to Duration message
-    scaled_msg = DurationMsg()
-    scaled_msg.sec = scaled_nanoseconds // 1_000_000_000
-    scaled_msg.nanosec = scaled_nanoseconds % 1_000_000_000
-
-    return scaled_msg
 
 
 class MoveIt2:
@@ -540,7 +523,7 @@ class MoveIt2:
             **{
                 key: value
                 for key, value in locals().items()
-                if key not in ["self", "cartesian_fraction_threshold"]
+                if key not in ["self", "cartesian_fraction_threshold", "cartesian_velocity_scaling_factor"]
             }
         )
 
@@ -560,15 +543,7 @@ class MoveIt2:
 
         if cartesian and traj is not None:
             # Rescale trajectory time, velocities and accelerations for cartesian plans
-            for point in traj.points:
-                point.time_from_start = scale_duration(point.time_from_start, cartesian_velocity_scaling_factor)
-
-                for i, v in enumerate(point.velocities):
-                    point.velocities[i] = v / cartesian_velocity_scaling_factor
-
-                for i, a in enumerate(point.accelerations):
-                    point.accelerations[i] = a / (cartesian_velocity_scaling_factor ** 2)
-
+            traj = scale_velocity(traj, cartesian_velocity_scaling_factor)
 
         return traj
 
