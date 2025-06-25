@@ -369,6 +369,7 @@ class MoveIt2:
         weight_orientation: float = 1.0,
         cartesian_max_step: float = 0.0025,
         cartesian_fraction_threshold: float = 0.0,
+        cartesian_velocity_scaling_factor: float = 1.0,
     ):
         """
         Plan and execute motion based on previously set goals. Optional arguments can be
@@ -455,6 +456,7 @@ class MoveIt2:
                     cartesian=cartesian,
                     max_step=cartesian_max_step,
                     cartesian_fraction_threshold=cartesian_fraction_threshold,
+                    cartesian_velocity_scaling_factor=cartesian_velocity_scaling_factor,
                 )
             )
 
@@ -529,7 +531,7 @@ class MoveIt2:
         cartesian: bool = False,
         max_step: float = 0.0025,
         cartesian_fraction_threshold: float = 0.0,
-        cartesian_velocity_scaling_factor: float = 4.0,
+        cartesian_velocity_scaling_factor: float = 1.0,
     ) -> Optional[JointTrajectory]:
         """
         Call plan_async and wait on future
