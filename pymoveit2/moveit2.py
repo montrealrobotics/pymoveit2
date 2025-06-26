@@ -42,7 +42,7 @@ from shape_msgs.msg import Mesh, MeshTriangle, SolidPrimitive
 from std_msgs.msg import Header, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from pymoveit2.utils import enum_to_str
+from pymoveit2.utils import enum_to_str, scale_velocity
 
 
 class MoveIt2State(Enum):
@@ -352,6 +352,7 @@ class MoveIt2:
         weight_orientation: float = 1.0,
         cartesian_max_step: float = 0.0025,
         cartesian_fraction_threshold: float = 0.0,
+        cartesian_velocity_scaling_factor: float = 1.0,
     ):
         """
         Plan and execute motion based on previously set goals. Optional arguments can be
@@ -438,6 +439,7 @@ class MoveIt2:
                     cartesian=cartesian,
                     max_step=cartesian_max_step,
                     cartesian_fraction_threshold=cartesian_fraction_threshold,
+                    cartesian_velocity_scaling_factor=cartesian_velocity_scaling_factor,
                 )
             )
 
@@ -512,6 +514,7 @@ class MoveIt2:
         cartesian: bool = False,
         max_step: float = 0.0025,
         cartesian_fraction_threshold: float = 0.0,
+        cartesian_velocity_scaling_factor: float = 1.0,
     ) -> Optional[JointTrajectory]:
         """
         Call plan_async and wait on future
@@ -520,7 +523,7 @@ class MoveIt2:
             **{
                 key: value
                 for key, value in locals().items()
-                if key not in ["self", "cartesian_fraction_threshold"]
+                if key not in ["self", "cartesian_fraction_threshold", "cartesian_velocity_scaling_factor"]
             }
         )
 
@@ -532,11 +535,17 @@ class MoveIt2:
         while not future.done():
             rclpy.spin_once(self._node, timeout_sec=1.0)
 
-        return self.get_trajectory(
+        traj = self.get_trajectory(
             future,
             cartesian=cartesian,
             cartesian_fraction_threshold=cartesian_fraction_threshold,
         )
+
+        if cartesian and traj is not None:
+            # Rescale trajectory time, velocities and accelerations for cartesian plans
+            traj = scale_velocity(traj, cartesian_velocity_scaling_factor)
+
+        return traj
 
     def plan_async(
         self,
@@ -2435,3 +2444,4 @@ def init_dummy_joint_trajectory_from_state(
     joint_trajectory.points.append(point)
 
     return joint_trajectory
+

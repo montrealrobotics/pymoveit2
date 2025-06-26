@@ -23,7 +23,7 @@ def base_link_name(prefix: str = "") -> str:
 
 
 def end_effector_name(prefix: str = "") -> str:
-    return prefix + "xarm_gripper"
+    return prefix + "link_tcp"
 
 
 def gripper_joint_names(prefix: str = "") -> List[str]:
