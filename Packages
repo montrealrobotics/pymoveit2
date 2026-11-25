@@ -1,0 +1,16 @@
+Package: ros-lyrical-pymoveit2
+Architecture: amd64
+Version: 5.1.0-2026.11.25.19.46
+Priority: optional
+Section: misc
+Maintainer: Andrej Orsula <orsula.andrej@gmail.com>
+Installed-Size: 514
+Depends: python3-numpy, ros-lyrical-action-msgs, ros-lyrical-control-msgs, ros-lyrical-geometry-msgs, ros-lyrical-moveit-msgs, ros-lyrical-rcl-interfaces, ros-lyrical-rclpy, ros-lyrical-sensor-msgs, ros-lyrical-shape-msgs, ros-lyrical-std-msgs, ros-lyrical-std-srvs, ros-lyrical-trajectory-msgs
+Filename: ./ros-lyrical-pymoveit2_5.1.0-2026.11.25.19.46_amd64.deb
+Size: 77548
+MD5sum: 97c9f085a0c357933548c5139049806e
+SHA1: 8b372df926b7bd4f3cec42a0d65a113f5310e726
+SHA256: 0b43b61472a6f4e464f0961d08f03cd8957d3c9020c8ffbbba7b27be080a08e0
+SHA512: 16ae62d6bd03ccaa9b68a1a262669398746aebbef7821f5df4812158ea5824a1061ab3fa67030c8af2c552a3c5eca3620573241c6cc2442f61de3ecfef3df662
+Description: Basic Python interface for MoveIt 2 built on top of ROS 2 actions and services
+
