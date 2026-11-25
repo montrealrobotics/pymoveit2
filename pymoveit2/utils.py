@@ -1,4 +1,5 @@
 from typing import Type
+
 from builtin_interfaces.msg import Duration as DurationMsg
 from trajectory_msgs.msg import JointTrajectory
 
@@ -24,6 +25,7 @@ def enum_to_str(enum_class: Type, value: int) -> str:
                 mapping[attr_value] = attr_name
     return mapping.get(value, f"{value} :UNKNOWN NAME")
 
+
 def scale_velocity(trajectory: JointTrajectory, factor: float) -> JointTrajectory:
     """
     Scales the velocities and accelerations in a JointTrajectory by a given factor.
@@ -32,9 +34,10 @@ def scale_velocity(trajectory: JointTrajectory, factor: float) -> JointTrajector
         point.time_from_start = scale_duration(point.time_from_start, factor)
 
         point.velocities = [v / factor for v in point.velocities]
-        point.accelerations = [a / (factor ** 2) for a in point.accelerations]
+        point.accelerations = [a / (factor**2) for a in point.accelerations]
 
     return trajectory
+
 
 def scale_duration(duration_msg: DurationMsg, factor: float) -> DurationMsg:
     """
